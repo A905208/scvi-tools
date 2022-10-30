@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import logsumexp
-from torch.distributions import Normal
+from torch.distributions import Normal, Gamma
 from torch.distributions import kl_divergence as kl
 
 from scvi import REGISTRY_KEYS
@@ -60,6 +60,7 @@ class VAE(BaseLatentModeModuleClass):
         * ``'nb'`` - Negative binomial distribution
         * ``'zinb'`` - Zero-inflated negative binomial distribution
         * ``'poisson'`` - Poisson distribution
+        * ``'gamma'`` - Gamma distribution
     latent_distribution
         One of
 
@@ -103,7 +104,7 @@ class VAE(BaseLatentModeModuleClass):
         dropout_rate: float = 0.1,
         dispersion: str = "gene",
         log_variational: bool = True,
-        gene_likelihood: Literal["zinb", "nb", "poisson"] = "zinb",
+        gene_likelihood: Literal["zinb", "nb", "poisson", "gamma"] = "zinb",
         latent_distribution: str = "normal",
         encode_covariates: bool = False,
         deeply_inject_covariates: bool = True,
@@ -406,6 +407,8 @@ class VAE(BaseLatentModeModuleClass):
             px = NegativeBinomial(mu=px_rate, theta=px_r, scale=px_scale)
         elif self.gene_likelihood == "poisson":
             px = Poisson(px_rate, scale=px_scale)
+        elif self.gene_likelihood == "gamma":
+            px = Gamma(px_rate, px_r)
 
         # Priors
         if self.use_observed_lib_size:
